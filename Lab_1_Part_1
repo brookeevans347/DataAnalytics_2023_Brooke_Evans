@@ -1,0 +1,106 @@
+#type things up here, not in the console.
+#Brooke Evans
+#tf is a boolean for true false in NA
+#E filters stuff
+#rm- remove
+#help()tells what things are
+#dply and tideyware for pretty histograms
+#
+BE_EPI2010_data <- read.csv("C:/Users/brook/OneDrive/Documents/Data_Analytics/Brooke_Evans_Lab_1/BE_EPI2010_data.csv")
+BE_EPI2010_data
+#this will not read with the backslashes. it only reads with forward slashes.
+#or
+#EPI_data <- read.xlsx("C:\Users\brook\OneDrive\Documents\Data_Analytics\Brooke_Evans_Lab_1\EPI_Data.xlsx")
+# Note: replace default data frame name – cannot start with numbers! ok this was done, i think. the code starts correctly with the numbers.
+View(BE_EPI2010_data)
+#
+attach(BE_EPI2010_data) 	# sets the ‘default’ object
+fix(BE_EPI2010_data) 	# launches a simple data editor (i think there was something about this being legacy, it pulled up the editor for me.)
+EPI 			# prints out values EPI_data$EPI
+tf <- is.na(EPI) # records True values if the value is NA
+E <- EPI[!tf] # filters out NA values, new array
+#
+#other data
+GRUMP_data <- read.csv("C:/Users/brook/OneDrive/Documents/Data_Analytics/Brooke_Evans_Lab_1/GPW3_GRUMP_SummaryInformation_2010.csv")
+#
+#exercise 1: exploring the distribution.
+summary(EPI)
+fivenum(EPI, na.rm = TRUE)
+stem(EPI)
+hist(EPI)
+hist(EPI, seq(30.,95.,1.0), prob=TRUE)
+lines(density(EPI,na.rm=TRUE,bw=1))
+rug(EPI)
+#
+#exercise 1: fitting a distribution beyond histograms
+#Cumulative Density Function
+plot(ecdf(EPI), do.points=FALSE, verticals=TRUE) 
+#Quantile-Quantile?
+par(pty="s") 
+qqnorm(EPI); qqline(EPI)
+#Simulated data from t-distribution:
+x <- rt(250, df = 5)
+qqnorm(x); qqline(x)
+#Make a Q-Q plot against the generating distribution by: x<-seq(30,95,1)
+qqplot(qt(ppoints(250), df = 5), x, xlab = "Q-Q plot for t dsn")
+qqline(x)
+#
+#ok. my turn. Going to explore this same code lines, but with fisheries and then ozone. and then inter compare the two.
+#
+#excercise 1: exploring the distribution for FISHERIES.
+tf <- is.na(FISHERIES) # records True values if the value is NA
+I <- FISHERIES[!tf] # filters out NA values, new array
+#
+summary(FISHERIES)
+fivenum(FISHERIES, na.rm = TRUE)
+stem(FISHERIES)
+hist(FISHERIES)
+hist(FISHERIES, seq(25.,100.,1.0), prob=TRUE)
+lines(density(FISHERIES,na.rm=TRUE,bw=1))
+rug(FISHERIES)
+#
+#exercise 1: fitting a distribution beyond histograms for FISHERIES
+#Cumulative Density Function
+plot(ecdf(FISHERIES), do.points=FALSE, verticals=TRUE) 
+#Quantile-Quantile?
+par(pty="s") 
+qqnorm(FISHERIES); qqline(FISHERIES)
+#Simulated data from t-distribution:
+x <- rt(250, df = 5)
+qqnorm(x); qqline(x)
+#Make a Q-Q plot against the generating distribution by: x<-seq(30,95,1)
+qqplot(qt(ppoints(250), df = 5), x, xlab = "Q-Q plot for t dsn")
+qqline(x)
+#this all works. Saving plots.
+#
+#exercise 1: exploring the distribution for OZONE_pt
+#
+tf <- is.na(OZONE_pt) # records True values if the value is NA
+O <- OZONE_pt[!tf] # filters out NA values, new array
+#
+summary(OZONE_pt)
+fivenum(OZONE_pt, na.rm = TRUE)
+stem(OZONE_pt)
+hist(OZONE_pt)
+hist(OZONE_pt, seq(0.,101.,1.0), prob=TRUE)
+lines(density(OZONE_pt,na.rm=TRUE,bw=1))
+rug(OZONE_pt)
+#
+#exercise 1: fitting a distribution beyond histograms for OZONE_pt
+#Cumulative Density Function
+plot(ecdf(OZONE_pt), do.points=FALSE, verticals=TRUE) 
+#Quantile-Quantile?
+par(pty="s") 
+qqnorm(OZONE_pt); qqline(OZONE_pt)
+#Simulated data from t-distribution:
+x <- rt(250, df = 5)
+qqnorm(x); qqline(x)
+#Make a Q-Q plot against the generating distribution by: x<-seq(30,95,1)
+qqplot(qt(ppoints(250), df = 5), x, xlab = "Q-Q plot for t dsn")
+qqline(x)
+#this all works. there is a very odd cap in the data for some points. skews analysis. saving plots.
+#
+#Inter-comparisons of the data sets FISHERIES and OZONE_pt
+boxplot(FISHERIES,OZONE_pt)
+qqplot(FISHERIES,OZONE_pt)
+#this all works. fisheries and ozone are NOT correlated very well, but if you really wanted to you could insert a cut off for the ozone data and see if there is anything interesting.
