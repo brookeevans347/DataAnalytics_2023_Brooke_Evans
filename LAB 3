@@ -1,0 +1,60 @@
+#Brooke Evans Lab 3
+
+#creating a matrix data with random numbers
+#and plotting the matrix using the image() function
+#you will see there, it does not have a real pattern in the plot.
+set.seed(12345)
+help(par)
+#par can be used to set our query graphical parameters.
+#Parameters can be set by specifiying them as arguments
+#to par in tag = value form, or by passing them as a list of tagged values.
+par(mar = rep(0.2, 4))
+data_Matrix <-(rnorm(400), nrow=40)
+image(1:10, 1:40, t(data_Matrix)[,nrow(data_Matrix):1])
+
+#now we can run a hierarchical cluster analysis on the dataset
+#we will use the heatmap() function that is available in R
+help("heatmap")
+#read the documentation for the heatmap() function that is available in RStudio
+#read the documentation for rep()
+help(rep)
+
+par(mar=rep(0.2,4))
+heatmap(data_Matrix)
+#when we run heatmap() here, we get the dendrograms printed on both the columns and the rows and still there is no real emerging pattern that is interesting to us, because there is no real interesting pattern underlying in the data that we generated.
+
+#now we will add a pattern to the data by doing a random coin flip
+#we will use the rbinom() function along with a for-loop
+help("rbinom")
+#read the documentation for the rbinom() function that is available in rstudio
+
+set.seed(678910)
+for(i in 1:40){
+#flipping a coin and getting the data
+coin_Flip <-rbinom(1, size=1, prob=0.5)
+#if the coin is "Heads", add a common pattern to that row,
+if(coin_Flip){
+data_Matrix[i,] <-data_Matrix[i,]+rep(c(0,3), each = 5)
+}
+}
+
+#what is happening here is that i looped through all the rows and on a random row i flipped a coin. 
+#during the coin flip, if it is turned out to be one (TRUE), then, just added a pattern to my data in a way that five of the columns have a mean of zero and the others have a mean of three
+
+#now we will plot the data, and we can see that right hand five columns have more yellow in them, which means that they have higher value and the left hand five columns that are a little bit more red in color means they have a lower value.
+#this is because some of the rows havea mean of three in the right hand side and some of the rows have mean of zero. now we have introduced some pattern to it.
+
+par(mar=rep(0.2,4))
+image(1:10, 1:40, t(data_Matrix)[,nrow(data_Matrix):1])
+
+#now we will run the heatmap() function on the data, we can see that two sets of columns are easily separated.
+
+par(mar=rep(0.2,4))
+heatmap(data_Matrix)
+
+#the dendrogram is on top if the matrix, which is on top of the columns, has clearly splits into two separate clusters, five on the left, five on the right. There is no real pattern that goes along the rows
+#let's take a closer look at the patterns in rows and columns by looking at the marginal means of the rows and columns. Ten different columns mean and forty different row means
+
+hh <-hclust(dist(data_Matrix))
+data_Matrix_Ordered <- data_Matrix[hh$order,]
+par(mfrow 
