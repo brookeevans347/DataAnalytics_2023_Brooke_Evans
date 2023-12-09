@@ -1,1 +1,682 @@
+#trying to see what the file reads as in R
+allcountyallstate <- read.csv("C:/Users/brook/OneDrive/Documents/CountyData_2020_2023.csv")
+attach(allcountyallstate)
+str(allcountyallstate)
+
+#the provisional drug overdose deaths did not originally read as a number,
+#so i changed it in Excel to be a number column and reloaded it, it reads as a num now.
+
+#hist(Provisional.Drug.Overdose.Deaths)
+Provisional.Drug.Overdose.Deaths
+hist(Provisional.Drug.Overdose.Deaths)
+
+#most of the values in the printed histogram are zero, ranging to 2500. I need to filter by the count at month 12
+#I beleive the counts are (stupidly) additive, which is why i want the ones at month 12
+#the other problem is that all of the NA values are values 1-10, and not measured for security reasons. so i want to also replace them with values of 1 to
+#give something of an estimate to the data.
+#i don't know how to do this yet
+
+#attempting to filter by count at month 12
+#looks like i need dplyr package
+library(dplyr)
+#the filter function will drop NA values, so i need to replace those first
+Provisional.Drug.Overdose.Deaths[is.na(Provisional.Drug.Overdose.Deaths)] <- 1
+Provisional.Drug.Overdose.Deaths
+#HUZZAH that worked. 
+#source: https://www.digitalocean.com/community/tutorials/replace-in-r
+#New histogram
+hist(Provisional.Drug.Overdose.Deaths)
+#all values are still pretty clustered on the left hand side of the graph. going to try to filter data.
+filter(allcountyallstate, Month == "12")
+#HUZZAH that worked.
+#source: https://dplyr.tidyverse.org/reference/filter.html
+#this did not carry over previous manipulation to remove NA and replace with 1, and i need to create a new data frame with this filter
+decemberfilter <- filter(allcountyallstate, Month == "12")
+decemberfilter[is.na(decemberfilter)] <- 1
+decemberfilter
+#ok, everything is filtered and all na's are reported as 1. This leaves room for still an underestimate but not a zero estimate that would not accurately
+#reflect the condition.
+hist(decemberfilter$Provisional.Drug.Overdose.Deaths)
+#this gives a much nicer representation. still skewed left.
+#ok. now i need to make the data set with the counties that have an interstate running through them.
+
+model1 <- lm(decemberfilter$Provisional.Drug.Overdose.Deaths ~ decemberfilter$Year)
+model1
+plot(model1)
+#these plots are ugly as sin but they are plots.
+
+model2 <- lm(decemberfilter$Provisional.Drug.Overdose.Deaths ~ decemberfilter$COUNTYFIPS)
+model2
+plot(model2)
+
+#this one is nicer. but i think i am going to have to run a KNN grouping.
+library(tidyverse)
+library(caTools)
+set.seed(2432)
+split <- sample.split(decemberfilter$Provisional.Drug.Overdose.Deaths, SplitRatio = 0.50)
+train <- subset (decemberfilter, split == TRUE)
+test <- subset (decemberfilter, split == FALSE)
+
+dim(train)
+
+train_scaled = scale(train[-11])
+test_scaled = scale(test[-11])
+#stopping here, need to convert non-numeric columns into numbers. that's why this isnt really working.
+
+head(train_scaled)
+dim(train_scaled)
+dim(test_scaled)
+
+
+library(class)
+test_pred <- knn(
+  train = train_scaled,
+  test = test_scaled,
+  cl = train,
+  k = 10
+)
+dim(test_pred)
+
+actual <- test
+actual
+cm <-table(actual, test_pred)
+#trying to see what the file reads as in R
+allcountyallstate <- read.csv("C:/Users/brook/OneDrive/Documents/CountyData_2020_2023.csv")
+attach(allcountyallstate)
+str(allcountyallstate)
+
+#the provisional drug overdose deaths did not originally read as a number,
+#so i changed it in Excel to be a number column and reloaded it, it reads as a num now.
+
+#hist(Provisional.Drug.Overdose.Deaths)
+Provisional.Drug.Overdose.Deaths
+hist(Provisional.Drug.Overdose.Deaths)
+
+#most of the values in the printed histogram are zero, ranging to 2500. I need to filter by the count at month 12
+#I beleive the counts are (stupidly) additive, which is why i want the ones at month 12
+#the other problem is that all of the NA values are values 1-10, and not measured for security reasons. so i want to also replace them with values of 1 to
+#give something of an estimate to the data.
+#i don't know how to do this yet
+
+#attempting to filter by count at month 12
+#looks like i need dplyr package
+library(dplyr)
+#the filter function will drop NA values, so i need to replace those first
+Provisional.Drug.Overdose.Deaths[is.na(Provisional.Drug.Overdose.Deaths)] <- 1
+Provisional.Drug.Overdose.Deaths
+#HUZZAH that worked. 
+#source: https://www.digitalocean.com/community/tutorials/replace-in-r
+#all values are still pretty clustered on the left hand side of the graph. going to try to filter data.
+filter(allcountyallstate, Month == "12")
+#HUZZAH that worked.
+#source: https://dplyr.tidyverse.org/reference/filter.html
+#this did not carry over previous manipulation to remove NA and replace with 1, and i need to create a new data frame with this filter
+decemberfilter <- filter(allcountyallstate, Month == "12")
+decemberfilter[is.na(decemberfilter)] <- 1
+decemberfilter
+
+#removing non-numeric columns
+decemberfilter$Data.as.of <- NULL
+decemberfilter$ST_ABBREV <- NULL
+decemberfilter$STATE_NAME <- NULL
+decemberfilter$COUNTYNAME <- NULL
+decemberfilter$CODE2013 <- NULL
+decemberfilter$Footnote <- NULL
+decemberfilter$Percentage.Of.Records.Pending.Investigation <- NULL
+decemberfilter$HistoricalDataCompletenessNote <- NULL
+decemberfilter$MonthEndingDate <- NULL
+decemberfilter$Start.Date <- NULL
+decemberfilter$End.Date <- NULL
+decemberfilter$Month <- NULL
+head(decemberfilter)
+
+#going to try to run KNN with the completely numerical decemberfilter.
+#KNN from https://www.datacamp.com/tutorial/k-nearest-neighbors-knn-classification-with-r-tutorial?irclickid=yxhQ-J3rZxyNT6pVgd2eiR0BUkFVbf1BQ2GMwQ0&irgwc=1&im_rewards=1&utm_medium=affiliate&utm_source=impact&utm_campaign=000000_1-2003851_2-mix_3-all_4-na_5-na_6-na_7-mp_8-affl-ip_9-na_10-bau_11-Bing%20Rebates%20by%20Microsoft&utm_content=BANNER&utm_term=EdgeBingFlow
+library(tidyverse)
+library(caTools)
+set.seed(255)
+split = sample.split(decemberfilter$Provisional.Drug.Overdose.Deaths, SplitRatio = 0.75)
+train = subset (decemberfilter, split == TRUE)
+test = subset (decemberfilter, split == FALSE)
+
+dim(train)
+
+train_scaled = scale(train[-5])
+test_scaled = scale(test[-5])
+
+head(train_scaled)
+dim(train_scaled)
+dim(test_scaled)
+
+
+library(class)
+test_pred <- knn(
+  train = train_scaled,
+  test = test_scaled,
+  cl = train$Provisional.Drug.Overdose.Deaths,
+  k = 10
+)
+dim(test_pred)
+
+actual <- test$Provisional.Drug.Overdose.Deaths
+cm <- table(actual,test_pred)
+cm
+
+accuracy <- sum(diag(cm)/length(actual))
+sprintf("Accuracy: %.2f%%", accuracy*100)
+#absolute garbage accuracy -> 45.07
+
+
+#going to try a new model with a bigger seed value
+set.seed(1000)
+split1 = sample.split(decemberfilter$Provisional.Drug.Overdose.Deaths, SplitRatio = 0.75)
+train1 = subset (decemberfilter, split == TRUE)
+test1 = subset (decemberfilter, split == FALSE)
+
+dim(train1)
+
+train_scaled1 = scale(train1[-5])
+test_scaled1 = scale(test1[-5])
+
+head(train_scaled1)
+dim(train_scaled1)
+dim(test_scaled1)
+
+
+test_pred1 <- knn(
+  train = train_scaled1,
+  test = test_scaled1,
+  cl = train1$Provisional.Drug.Overdose.Deaths,
+  k = 10
+)
+dim(test_pred1)
+
+actual1 <- test1$Provisional.Drug.Overdose.Deaths
+cm1 <- table(actual1,test_pred1)
+cm1
+
+accuracy1 <- sum(diag(cm1)/length(actual1))
+sprintf("Accuracy1: %.2f%%", accuracy1*100)
+#accuracy is still garbage -> 45.24%
+
+
+#trying again, messing with k this time.
+set.seed(1000)
+split2 = sample.split(decemberfilter$Provisional.Drug.Overdose.Deaths, SplitRatio = 0.75)
+train2 = subset (decemberfilter, split == TRUE)
+test2 = subset (decemberfilter, split == FALSE)
+
+dim(train2)
+
+train_scaled2 = scale(train2[-5])
+test_scaled2 = scale(test2[-5])
+
+head(train_scaled2)
+dim(train_scaled2)
+dim(test_scaled2)
+
+test_pred2 <- knn(
+  train = train_scaled2,
+  test = test_scaled2,
+  cl = train2$Provisional.Drug.Overdose.Deaths,
+  k = 20
+)
+dim(test_pred2)
+
+actual2 <- test2$Provisional.Drug.Overdose.Deaths
+cm2 <- table(actual2,test_pred2)
+cm2
+
+accuracy2 <- sum(diag(cm2)/length(actual2))
+sprintf("Accuracy2: %.2f%%", accuracy2*100)
+#changing K seems to have improved more than changing the seed value -> 46.86%
+
+
+#changing K value again, much higher.
+set.seed(1000)
+split3 = sample.split(decemberfilter$Provisional.Drug.Overdose.Deaths, SplitRatio = 0.75)
+train3 = subset (decemberfilter, split == TRUE)
+test3 = subset (decemberfilter, split == FALSE)
+
+dim(train3)
+
+train_scaled3 = scale(train3[-5])
+test_scaled3 = scale(test3[-5])
+
+head(train_scaled3)
+dim(train_scaled3)
+dim(test_scaled3)
+
+
+test_pred3 <- knn(
+  train = train_scaled3,
+  test = test_scaled3,
+  cl = train3$Provisional.Drug.Overdose.Deaths,
+  k = 100
+)
+dim(test_pred3)
+
+actual3 <- test3$Provisional.Drug.Overdose.Deaths
+cm3 <- table(actual3,test_pred3)
+cm3
+
+accuracy3 <- sum(diag(cm3)/length(actual3))
+sprintf("Accuracy3: %.2f%%", accuracy3*100)
+#accuracy 47.25%. sending K higher.
+plot(cm3)
+#i think i am just going to have to leave the ones out....
+#this plot is all sorts of unholy.
+#i am not allowed to munge the way i have been previously, so we are going to try again...
+allcounty <- read.csv("C:/Users/brook/OneDrive/Documents/CountyData_2020_2023.csv")
+head(allcounty)
+attach(allcounty)
+
+decemberfilter2 <- filter(allcounty, Month == "12")
+decemberfilter2
+
+#removing non-numeric columns
+decemberfilter2$Data.as.of <- NULL
+decemberfilter2$ST_ABBREV <- NULL
+decemberfilter2$STATE_NAME <- NULL
+decemberfilter2$COUNTYNAME <- NULL
+decemberfilter2$CODE2013 <- NULL
+decemberfilter2$Footnote <- NULL
+decemberfilter2$Percentage.Of.Records.Pending.Investigation <- NULL
+decemberfilter2$HistoricalDataCompletenessNote <- NULL
+decemberfilter2$MonthEndingDate <- NULL
+decemberfilter2$Start.Date <- NULL
+decemberfilter2$End.Date <- NULL
+decemberfilter2$Month <- NULL
+head(decemberfilter2)
+allcountyallstate
+
+allcountyallstate$Data.as.of <- NULL
+allcountyallstate$ST_ABBREV <- NULL
+allcountyallstate$STATE_NAME <- NULL
+allcountyallstate$COUNTYNAME <- NULL
+allcountyallstate$CODE2013 <- NULL
+allcountyallstate$Footnote <- NULL
+allcountyallstate$Percentage.Of.Records.Pending.Investigation <- NULL
+allcountyallstate$HistoricalDataCompletenessNote <- NULL
+allcountyallstate$MonthEndingDate <- NULL
+allcountyallstate$Start.Date <- NULL
+allcountyallstate$End.Date <- NULL
+allcountyallstate$Month <- NULL
+head(allcountyallstate)
+
+#going to try a Kmeans with whatever value they give. this is not going to be pleasant.
+library(factoextra)
+library(cluster)
+
+allcountyallstate_scale <- scale(allcountyallstate)
+#fviz_nbclust(allcountyallstate_scale, kmeans, method = "wss")
+#the data set is too big. going to have to filter some stuff.
+library(tidyverse)
+allcountyallstate %>% filter(!is.na(Provisional.Drug.Overdose.Deaths))
+#https://stackoverflow.com/questions/28857653/removing-na-observations-with-dplyrfilter
+
+allcountyallstate_scale <- scale(allcountyallstate)
+#fviz_nbclust(allcountyallstate_scale, kmeans, method = "wss")
+#set is still too big... going to try december filter again.
+
+decemberfilter4 <- filter(allcountyallstate, Month == "12")
+head(decemberfilter4)
+decemberfilter4 %>% filter(!is.na(Provisional.Drug.Overdose.Deaths))
+
+decemberfilter4_scale <- scale(decemberfilter4)
+#fviz_nbclust(decemberfilter4_scale, kmeans, method = "wss")
+#bugger had a bloody error. trying a fix.
+decemberfilter4_scale <-na.omit(decemberfilter4_scale)
+fviz_nbclust(decemberfilter4_scale, kmeans, method = "wss")
+#that fixed it. (https://www.statology.org/error-in-do_onenmeth-na-nan-inf-in-foreign-function-call/)
+#gap_stat <-clusGap(decemberfilter4_scale,
+                   #FUN = kmeans,
+                   #nstart = 25,
+                  # K.max = 10,
+                  # B = 50)
+#fviz_gap_stat(gap_stat)
+#warnings()
+#gave a bunch of warnings so my K.max is too small... trying again.
+#gap_stat100 <-clusGap(decemberfilter4_scale,
+                #   FUN = kmeans,
+                #   nstart = 25,
+                 #  K.max = 100,
+                  # B = 50)
+#warnings()
+#this package may only work for small data sets this is a PAIN and is taking ages.
+#still gave me problems here. trying something else.
+decemberfilter5 <-decemberfilter4 %>% filter(!is.na(Provisional.Drug.Overdose.Deaths))
+km <-kmeans(decemberfilter5, centers = 3)
+km
+fviz_cluster(km, data = decemberfilter5)
+#covers 86.2%
+km5 <-kmeans(decemberfilter5, centers = 5)
+km5
+fviz_cluster(km5, data = decemberfilter5)
+#this one has a lt of overlap but the between_SS and total_SS is 96.2
+
+km10 <-kmeans(decemberfilter5, centers=10)
+km10
+fviz_cluster(km10, data = decemberfilter5)
+#covers 97.6%
+#this is working nicely now, need to scale and work on outliers...
+decemberfilter5_scale <- scale(decemberfilter5)
+kmF3 <- kmeans(decemberfilter5_scale, centers = 3)
+kmF3
+fviz_cluster(kmF3, data = decemberfilter5)
+#covers 40.6%
+kmF5 <- kmeans(decemberfilter5_scale, centers = 5)
+kmF5
+fviz_cluster(kmF5, data = decemberfilter5)
+#covers 56.7%
+
+kmF10 <- kmeans(decemberfilter5_scale, centers = 10)
+kmF10
+fviz_cluster(kmF10, data = decemberfilter5)
+#covers 74.9%
+
+kmF20 <- kmeans(decemberfilter5_scale, centers = 20)
+kmF20
+fviz_cluster(kmF20, data = decemberfilter5)
+#86.2%
+
+kmF30 <- kmeans(decemberfilter5_scale, centers = 30)
+kmF30
+fviz_cluster(kmF30, data = decemberfilter5)
+#this one covers 89.5%. but has a bunch of errors
+warnings()
+
+kmF50 <- kmeans(decemberfilter5_scale, centers = 50)
+kmF50
+fviz_cluster(kmF50, data = decemberfilter5)
+#ok so this gets 93.5% but there were a BUNCH of errors. so nothing over 30 will work.
+
+kmF25 <- kmeans(decemberfilter5_scale, centers = 25)
+kmF25
+fviz_cluster(kmF25, data = decemberfilter5)
+#got a bunch of warnings from this one too. covers 88.5%
+
+kmF21 <- kmeans(decemberfilter5_scale, centers = 21)
+kmF21
+fviz_cluster(kmF21, data = decemberfilter5)
+#no errors. 85.9%
+
+kmF22 <- kmeans(decemberfilter5_scale, centers = 22)
+kmF22
+fviz_cluster(kmF22, data = decemberfilter5)
+#no errors. 87.3%
+
+kmF23 <- kmeans(decemberfilter5_scale, centers = 23)
+kmF23
+fviz_cluster(kmF23, data = decemberfilter5)
+#no errors. 87.2%
+set.seed(1)
+kmF24 <- kmeans(decemberfilter5_scale, centers = 24)
+kmF24
+fviz_cluster(kmF24, data = decemberfilter5)
+#no errors. 88.5%
+
+#going to append the cluster assignments for 10 and 24 back to their data sets to see if there is any groupings?
+kmF10_append <- cbind(decemberfilter5, cluster = kmF10$cluster)
+head(kmF10_append)
+
+kmF24_append <- cbind(decemberfilter5, cluster = kmF24$cluster)
+head(kmF24_append)
+
+#ok i remember why i wanted more clusters. the grouping for the 10 is very large... ill try both.
+kmF10_group3 <- filter(kmF10_append, cluster == "3")
+kmF10_group3
+#YAY that works so nicely omg
+kmF24_group3 <- filter(kmF24_append, cluster == "3")
+kmF24_group8 <- filter(kmF24_append, cluster == "8")
+kmF24_group9 <- filter(kmF24_append, cluster == "9")
+kmF24_group14 <- filter(kmF24_append, cluster == "14")
+kmF24_group16 <- filter(kmF24_append, cluster == "16")
+#i should have appended the data with the states and county fips codes before I ran these. let me try again.
+
+#ok i have the groups, the state codes and the county codes... now i have to figure out how i would like to populate the columns to match if they have a interstate...
+#thilanka has mentioned several rounds of doing other things, but what i think will be really important will be to get the Kmeans grouped back to the map to see the groups.
+head(allcountyallstate)
+head(allcounty)
+head(allcountyallstate1)
+
+library(tidyverse)
+#ok so i think i can use the allcounty to filter and append to the other data set that i ran the kmeans with
+allcountydec <- filter(allcounty, Month == "12")
+head(allcountydec)
+#ok nice that worked to get all the december ones.
+#now to filter out the NAs
+allcountydecna <- allcountydec %>% filter(!is.na(Provisional.Drug.Overdose.Deaths))
+allcountydecna
+#yea that worked.
+#appending to new sheet for kmeans results
+
+kmF24withstatecounty <- cbind(kmF24_append, allcountydecna$STATE_NAME, allcountydecna$COUNTYNAME)
+head(kmF24withstatecounty)
+#MUHAHAHA THAT WORKED
+
+kmF24_group3r2 <- filter(kmF24withstatecounty, cluster == "3")
+kmF24_group8r2 <- filter(kmF24withstatecounty, cluster == "8")
+kmF24_group9r2 <- filter(kmF24withstatecounty, cluster == "9")
+kmF24_group14r2 <- filter(kmF24withstatecounty, cluster == "14")
+kmF24_group16r2 <- filter(kmF24withstatecounty, cluster == "16")
+
+kmF24_group3r2
+kmF24_group8r2
+kmF24_group9r2
+kmF24_group14r2
+kmF24_group16r2
+
+#this is honestly so much fun to look at.
+
+kmF10withstatecounty <- cbind(kmF10_append, allcountydecna$STATE_NAME, allcountydecna$COUNTYNAME)
+head(kmF10withstatecounty)
+
+kmF10_group3r2 <- filter(kmF10withstatecounty, cluster == "3")
+kmF10_group3r2
+#ok lets see if we can get model 2 up and running
+#going to try and see if we can get a SVM up and running
+
+library(e1071)
+library(ggplot2)
+
+qplot(allcountydecna$STATEFIPS, allcountydecna$Provisional.Drug.Overdose.Deaths, color = allcountydec$STATE_NAME)
+#this gave a massive warning... didnt work.
+
+svm_model1 <- svm(Provisional.Drug.Overdose.Deaths~., data = decemberfilter5)
+summary(svm_model1)
+plot(svm_model1, data = decemberfilter5)
+#this doesnt generate a plot...
+
+qplot(allcountydecna$STATEFIPS, allcountydecna$Provisional.Drug.Overdose.Deaths)
+qplot(allcountydecna$STATEFIPS, allcountydecna$Provisional.Drug.Overdose.Deaths, color = allcountydec$STATE_NAME)
+#it doesn't like the color bit.
+qplot(allcountydecna$FIPS, allcountydecna$Provisional.Drug.Overdose.Deaths)
+#it looks like there are some outliers, need to do an outlier analysis for arizona.
+#also i really don't know if there is acutally anything that can be done for svm...
+help("qplot")
+qplot(allcountydecna$FIPS, allcountydecna$Provisional.Drug.Overdose.Deaths, colour = allcounty$COUNTYNAME)
+qplot(FIPS, Provisional.Drug.Overdose.Deaths, data = decemberfilter5)
+
+#ok so need three things here. 1)  the county. 2) the drug deaths. 3) if an interstate passes through the county.
+#also i need to do the outlier analysis.
+
+#filter by the interstates... idk if this is going to work.
+allroads <- read.csv("C:/Users/brook/OneDrive/Documents/North_American_Roads.csv")
+attach(allroads)
+str(allroads)
+
+interstates <- allroads %>% filter(roadnum=="I4" | roadnum=="I5" | roadnum=="I8" | roadnum=="I10" | roadnum=="I12" | roadnum=="I15" | roadnum=="I16" | roadnum=="I17" | roadnum=="I19" | roadnum=="I20" | roadnum=="I24" | roadnum=="I25" | roadnum=="I26" | roadnum=="I27" | roadnum=="I29" | roadnum=="I30" | roadnum=="I35" | roadnum=="I37" | roadnum=="I39" | roadnum=="I40" | roadnum=="I43" | roadnum=="I44" | roadnum=="I45" | roadnum=="I49" | roadnum=="I64" | roadnum=="I65" | roadnum=="I66" | roadnum=="I68" | roadnum=="I69" | roadnum=="I70" | roadnum=="I71" | roadnum=="I72" | roadnum=="I73" | roadnum=="I74" | roadnum=="I75" | roadnum=="I76" | roadnum=="I77" | roadnum=="I78" | roadnum=="I79" | roadnum=="I80" | roadnum=="I81" | roadnum=="I82" | roadnum=="I83" | roadnum=="I84" | roadnum=="I85" | roadnum=="I86" | roadnum=="I87" | roadnum=="I88" | roadnum=="I89" | roadnum=="I90" | roadnum=="I91" | roadnum=="I93" | roadnum=="I94" | roadnum=="I95" | roadnum=="I96" | roadnum=="I97" | roadnum=="I99"
+)
+interstates
+#yea that worked!!!
+dim(interstates)
+dim(decemberfilter5_nooutliers)
+dim(decemberfilter5)
+head(interstates)
+#outlier analysis
+decemberfilter5
+library(ISLR)
+
+#lifting code from class
+#linear regression model.
+deathspredictedmodel1 <- lm(Provisional.Drug.Overdose.Deaths~., data = decemberfilter5)
+summary(deathspredictedmodel1)
+#multiple rsquared : 0.01108, adjusted rsquared : 0.01049
+#cooks distance
+cooksDfordeaths <- cooks.distance(deathspredictedmodel1)
+influentialdeaths <- cooksDfordeaths[(cooksDfordeaths > (3*mean(cooksDfordeaths, na.rm = TRUE)))]
+influentialdeaths
+names_influentialdeaths <- names(influentialdeaths)
+names_influentialdeaths
+outliers <- decemberfilter5[names_influentialdeaths,]
+outliers
+dim(outliers)
+summary(cooksDfordeaths)
+plot(cooksDfordeaths)
+#creates a filtered data frame with the needed outliers.
+decemberfilter5_nooutliers <- decemberfilter5 %>% anti_join(outliers)
+
+#model again without outliers
+qplot(FIPS, Provisional.Drug.Overdose.Deaths, data = decemberfilter5_nooutliers)
+#ok so the filter worked. lemme see if the lm changes
+deathspredictedmodel2 <-lm(Provisional.Drug.Overdose.Deaths~., data = decemberfilter5_nooutliers)
+summary(deathspredictedmodel2)
+#rsqaured is still trash but here we go! rsqared = 0.01501, and adjusted is 0.01441
+
+decemberfilter5_nooutliers_scale <- scale(decemberfilter5_nooutliers)
+fviz_nbclust(decemberfilter5_nooutliers_scale, kmeans, method = "wss")
+gap_stat <-clusGap(decemberfilter5_nooutliers_scale,
+                   FUN = kmeans,
+                   nstart = 25,
+                   K.max = 10,
+                   B = 50)
+fviz_gap_stat(gap_stat)
+#its giving one cluster and a bunch of errors. so the other things are likely inconclusive with the way that i have them done now.
+set.seed(1)
+kmFO1 <- kmeans(decemberfilter5_nooutliers_scale, centers = 1, nstart = 25)
+kmFO1
+
+fviz_cluster(kmFO1, data = decemberfilter5_nooutliers_scale)
+aggregate(decemberfilter5_nooutliers, by=list(cluster=kmFO1$cluster), mean)
+
+#trying 2 clusters
+set.seed(1)
+kmFO2 <- kmeans(decemberfilter5_nooutliers_scale, centers = 2, nstart = 25)
+kmFO2
+
+fviz_cluster(kmFO2, data = decemberfilter5_nooutliers_scale)
+aggregate(decemberfilter5_nooutliers, by=list(cluster=kmFO2$cluster), mean)
+#yea nope. it is just separating them by fips or year.
+set.seed(1)
+kmFO24 <- kmeans(decemberfilter5_nooutliers_scale, centers = 24, nstart = 25)
+kmFO24
+
+fviz_cluster(kmFO24, data = decemberfilter5_nooutliers_scale)
+aggregate(decemberfilter5_nooutliers, by=list(cluster=kmFO24$cluster), mean)
+#yea nope. let me see if i can get the interstate data to make more sense.
+
+#lets run stuff on the outliers.
+qplot(FIPS, Provisional.Drug.Overdose.Deaths, data = outliers)
+#ok we might be more interested in this.
+outliers_scale <-scale(outliers)
+fviz_nbclust(outliers_scale, kmeans, method = "wss")
+gap_stat <-clusGap(outliers_scale,
+                   FUN = kmeans,
+                   nstart = 25,
+                   K.max = 10,
+                   B = 50)
+fviz_gap_stat(gap_stat)
+#gave 10 clusters
+set.seed(1)
+kmO10 <- kmeans(outliers_scale, centers = 10, nstart = 25)
+kmO10
+#covers 86%, not bad.
+fviz_cluster(kmO10, data = outliers_scale)
+#this is actually quite lovely.
+aggregate(outliers, by=list(cluster=kmO10$cluster), mean)
+
+kmO10_appended <- cbind(outliers, cluster = kmO10$cluster)
+kmO10_appended
+
+#trying to get the county and state loaded back in.
+kmO10withstatecounty <- cbind(kmF24_append, allcountydecna$STATE_NAME, allcountydecna$COUNTYNAME)
+head(kmF24withstatecounty)
+kmO10withstatecounty
+#this did not work... ill just have to go through by hand.
+
+kmO10_group3 <- filter(kmO10_appended, cluster == "3")
+kmO10_group3
+
+kmO10_group1 <- filter(kmO10_appended, cluster == "1")
+kmO10_group1
+
+kmO10_group2 <- filter(kmO10_appended, cluster == "2")
+kmO10_group2
+
+kmO10_group4 <- filter(kmO10_appended, cluster == "4")
+kmO10_group4
+
+kmO10_group5 <- filter(kmO10_appended, cluster == "5")
+kmO10_group5
+
+kmO10_group6 <- filter(kmO10_appended, cluster == "6")
+kmO10_group6
+
+kmO10_group7 <- filter(kmO10_appended, cluster == "7")
+kmO10_group7
+
+kmO10_group8 <- filter(kmO10_appended, cluster == "8")
+kmO10_group8
+
+kmO10_group9 <- filter(kmO10_appended, cluster == "9")
+kmO10_group9
+
+kmO10_group10 <- filter(kmO10_appended, cluster == "10")
+kmO10_group10
+
+#ok got everything partitioned... this is making me think i need to run this again without the year and actual fips codes...
+#trying to see if i can get the counties to correctly append.
+outliers2 <- allcounty[names_influentialdeaths,]
+outliers2
+#im not really sure this worked.
+
+outliers3 <-allcountydecna[names_influentialdeaths,]
+outliers3
+#this one looks better... lets see if it will append correctly.
+kmO10withstatecounty <- cbind(kmO10_appended, outliers3$STATE_NAME, outliers3$COUNTYNAME)
+head(kmO10withstatecounty)
+#okkkk this mightve worked...
+kmO10withstatecounty
+#yup i believe it worked. LOVELY.
+#from : https://www.statology.org/export-data-frame-to-csv-in-r/
+library(data.table)
+fwrite(kmO10withstatecounty, "C:\\Users\\brook\\OneDrive\\Documents\\Data_Analytics\\BrookeEvansFinalProject\\kmO10withstatecountyforinterstates")
+#from : https://www.statology.org/r-export-to-excel/
+install.packages('writexl')
+library(writexl)
+write_xlsx(kmO10withstatecounty, "C:\\Users\\brook\\OneDrive\\Documents\\Data_Analytics\\BrookeEvansFinalProject\\kmO10withstatecountyforinterstates.xlsx")
+#trying svm again.
+
+library(e1071)
+modeldeaths = svm(Provisional.Drug.Overdose.Deaths~ STATEFIPS + COUNTYFIPS, data = outliers)
+plot(modeldeaths, outliers)
+summary(modeldeaths)
+head(modeldeaths)
+
+#it still didnt print a plot. so i think i am going to have to do this by state
+#pick a few representative states and go from there i suppose.
+
+hist(decemberfilter5$Provisional.Drug.Overdose.Deaths)
+hist(decemberfilter5_nooutliers$Provisional.Drug.Overdose.Deaths)
+hist(outliers$Provisional.Drug.Overdose.Deaths)
+
+summary(decemberfilter5_nooutliers)
+summary(outliers)
+summary(decemberfilter5)
+warnings()
+
+qplot(decemberfilter5$FIPS, decemberfilter5$Provisional.Drug.Overdose.Deaths)
+qplot(decemberfilter5_nooutliers$FIPS, decemberfilter5_nooutliers$Provisional.Drug.Overdose.Deaths)
+qplot(outliers$FIPS, outliers$Provisional.Drug.Overdose.Deaths)
 
